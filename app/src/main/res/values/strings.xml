@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">NotifyListenerDemo</string>
+    <string name="permission">请求权限</string>
+    <string name="ip_address">请输入IP Address</string>
+    <string name="port">请输入端口号</string>
+    <string name="tips">
+        使用方法：\n
+            1、请求权限，授予软件获得通知的权限。\n
+            2、请正确输入电脑端的IPv4地址和端口（电脑端显示的）\n
+            3、正常使用啦~
+    </string>
 </resources>

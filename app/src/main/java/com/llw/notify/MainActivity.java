@@ -11,7 +11,6 @@ import android.os.StrictMode;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -29,27 +28,26 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
     String msgText;
     String appName = "";
     String data = "";
-    String ip = "";
+    String url = "";
     private static final int REQUEST_CODE = 9527;
     private TextView textView;
 
     @Override
-    @SuppressLint("NewApi")
+    @SuppressLint({"NewApi", "SetTextI18n"})
     protected void onCreate(Bundle savedInstanceState) {
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         textView = findViewById(R.id.textView);
-
+        TextView tips = findViewById(R.id.tipview);
+        tips.setText("使用方法：\n" +
+                "            1、请求权限，授予软件获得通知的权限。\n" +
+                "            2、请正确输入电脑端的IPv4地址和端口（电脑端显示的）\n" +
+                "            3、正常使用啦~");
         NotifyHelper.getInstance().setNotifyListener(this);
     }
 
-    /**
-     * 请求权限
-     *
-     * @param view
-     */
     public void requestPermission(View view) {
         if (!isNLServiceEnabled()) {
             Intent intent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
@@ -62,8 +60,6 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
 
     /**
      * 是否启用通知监听服务
-     *
-     * @return
      */
     public boolean isNLServiceEnabled() {
         Set<String> packageNames = NotificationManagerCompat.getEnabledListenerPackages(this);
@@ -98,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
 
 
     private void showMsg(String msg) {
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
     }
 
 
@@ -109,27 +105,13 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
      */
     @Override
     public void onNotificationPosted(StatusBarNotification sbn) {
-        final EditText editText = findViewById(R.id.input_ip);
-        ip = editText.getText().toString();
-        if (ip.equals("")){
-            showMsg("请输入ip地址和端口");
-        }
-        else {
-            try {
-                HttpHelper.post(ip,"0");
-            } catch (Exception e) {
-                showMsg("请输入正确的ip地址和端口");
-            }
-        }
+        final EditText editIP = findViewById(R.id.input_ip);
+        final EditText editPort = findViewById(R.id.port);
+        url = editIP.getText().toString() + ":" + editPort.getText().toString();
         boolean same;
         if (sbn.getNotification() == null) return;
         try {
-            Log.i("msgText", msgText);
-        } catch (Exception e) {
-            Log.i("msgText", "null");
-        }
-        try {
-            same = msgText.equals(sbn.getNotification().extras.getString(Notification.EXTRA_TEXT))&&
+            same = msgText.equals(sbn.getNotification().extras.getString(Notification.EXTRA_TEXT)) &&
                     msgTitle.equals(sbn.getNotification().extras.getString(Notification.EXTRA_TITLE));
         } catch (Exception e) {
             same = false;
@@ -148,10 +130,11 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
             data = String.format(Locale.getDefault(),
                     "{'PackageName':'%s','AppName':'%s','Title':'%s','Text':'%s','time':'%s'}",
                     sbn.getPackageName(), appName, msgTitle, msgText, time);
-            Log.i("data", data);
-            HttpHelper.post(ip, data);
-
-
+            try {
+                HttpHelper.post(url, data);
+            } catch (Exception e) {
+                showMsg("请检查并输入正确的IP地址和端口");
+            }
             textView.setText(String.format(Locale.getDefault(),
                     "应用包名：%s\n应用名：%s\n消息标题：%s\n消息内容：%s\n消息时间：%s\n",
                     sbn.getPackageName(), appName, msgTitle, msgText, time));

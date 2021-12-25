@@ -19,8 +19,8 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="请求权限"
         android:onClick="requestPermission"
+        android:text="@string/permission"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -29,19 +29,41 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="20dp">
+        android:padding="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/tipview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@id/input_ip"
+            android:layout_marginTop="58dp"
+            android:layout_marginBottom="-80dp"
+            android:text="@string/tips" />
 
         <EditText
             android:id="@+id/input_ip"
-            android:layout_width="match_parent"
+            android:layout_width="233dp"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="10dp"
-            android:hint="请输入IP Address"
+            android:hint="@string/ip_address"
             android:imeOptions="actionDone"
-            android:inputType="textUri|text"
-            android:maxLines="5"
-            android:textSize="20sp"
-            android:autofillHints="请输入IP Address" />
+            android:inputType="numberSigned"
+            android:maxLines="7"
+            android:selectAllOnFocus="true"
+            android:textSize="18sp" />
+
+        <EditText
+            android:id="@+id/port"
+            android:layout_width="139dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="-1dp"
+            android:layout_toEndOf="@+id/input_ip"
+            android:ems="10"
+            android:hint="@string/port"
+            android:inputType="number" />
 
     </RelativeLayout>
 
