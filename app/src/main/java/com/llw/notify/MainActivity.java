@@ -1,38 +1,40 @@
 package com.llw.notify;
 
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.NotificationManagerCompat;
 
-import android.app.Activity;
-import android.content.ActivityNotFoundException;
+import android.annotation.SuppressLint;
+import android.app.Notification;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.IBinder;
+import android.os.StrictMode;
 import android.service.notification.StatusBarNotification;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationManagerCompat;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Set;
 
-import static com.llw.notify.NotifyHelper.*;
-
 public class MainActivity extends AppCompatActivity implements NotifyListener {
-
+    String msgTitle;
+    String msgText;
+    String appName = "";
+    String data = "";
     private static final int REQUEST_CODE = 9527;
-
     private TextView textView;
 
     @Override
+    @SuppressLint("NewApi")
     protected void onCreate(Bundle savedInstanceState) {
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         textView = findViewById(R.id.textView);
@@ -61,10 +63,7 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
      */
     public boolean isNLServiceEnabled() {
         Set<String> packageNames = NotificationManagerCompat.getEnabledListenerPackages(this);
-        if (packageNames.contains(getPackageName())) {
-            return true;
-        }
-        return false;
+        return packageNames.contains(getPackageName());
     }
 
     /**
@@ -101,81 +100,45 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
     /**
      * 收到通知
      *
-     * @param type 通知类型
-     */
-    @Override
-    public void onReceiveMessage(int type) {
-        switch (type) {
-            case N_MESSAGE:
-                textView.setText("收到短信消息");
-                break;
-            case N_CALL:
-                textView.setText("收到来电消息");
-                break;
-            case N_WX:
-                textView.setText("收到微信消息");
-                break;
-            case N_QQ:
-                textView.setText("收到QQ消息");
-                break;
-            default:
-                break;
-        }
-    }
-
-    /**
-     * 移除通知
-     *
-     * @param type 通知类型
-     */
-    @Override
-    public void onRemovedMessage(int type) {
-        switch (type) {
-            case N_MESSAGE:
-                textView.setText("移除短信消息");
-                break;
-            case N_CALL:
-                textView.setText("移除来电消息");
-                break;
-            case N_WX:
-                textView.setText("移除微信消息");
-                break;
-            case N_QQ:
-                textView.setText("移除QQ消息");
-                break;
-            default:
-                break;
-        }
-    }
-
-    /**
-     * 收到通知
-     *
      * @param sbn 状态栏通知
      */
     @Override
-    public void onReceiveMessage(StatusBarNotification sbn) {
+    public void onNotificationPosted(StatusBarNotification sbn) {
+        boolean same;
         if (sbn.getNotification() == null) return;
-        //消息内容
-        String msgContent = "";
-        if (sbn.getNotification().tickerText != null) {
-            msgContent = sbn.getNotification().tickerText.toString();
+        try {
+            Log.i("info", msgText);
+        } catch (Exception e) {
+            Log.i("info", "null");
+        }
+        try {
+            same = msgText.equals(sbn.getNotification().extras.getString(Notification.EXTRA_TEXT))&&
+                    msgTitle.equals(sbn.getNotification().extras.getString(Notification.EXTRA_TITLE));
+        } catch (Exception e) {
+            same = false;
+        }
+        if (same) {
+            Log.i("info", "相同");
+        } else {
+            msgTitle = sbn.getNotification().extras.getString(Notification.EXTRA_TITLE);
+            msgText = sbn.getNotification().extras.getString(Notification.EXTRA_TEXT);
+            if (msgTitle == null) return;
+            appName = AppInfo.getAppInfo(this, sbn.getPackageName());
+
+            //消息时间
+            String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINESE)
+                    .format(new Date(sbn.getPostTime()));
+            data = String.format(Locale.getDefault(),
+                    "{'PackageName':'%s','AppName':'%s','Title':'%s','Text':'%s','time':'%s'}",
+                    sbn.getPackageName(), appName, msgTitle, msgText, time);
+            Log.i("info", data);
+            HttpHelper.post(data);
+
+
+            textView.setText(String.format(Locale.getDefault(),
+                    "应用包名：%s\n应用名：%s\n消息标题：%s\n消息内容：%s\n消息时间：%s\n",
+                    sbn.getPackageName(), appName, msgTitle, msgText, time));
         }
 
-        //消息时间
-        String time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINESE).format(new Date(sbn.getPostTime()));
-        textView.setText(String.format(Locale.getDefault(),
-                "应用包名：%s\n消息内容：%s\n消息时间：%s\n",
-                sbn.getPackageName(), msgContent, time));
-    }
-
-    /**
-     * 移除通知
-     *
-     * @param sbn 状态栏通知
-     */
-    @Override
-    public void onRemovedMessage(StatusBarNotification sbn) {
-        textView.setText("通知移除");
     }
 }
