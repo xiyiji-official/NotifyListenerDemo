@@ -11,10 +11,10 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
 public class HttpHelper {
-    public static void post(String param) {
+    public static void post(String ip, String param) {
         HttpURLConnection connection = null;
         try {
-            URL url = new URL("http://81.70.192.177:5000/received");
+            URL url = new URL(String.format("http://%s/received",ip));
             connection = (HttpURLConnection) url.openConnection();
             connection.setConnectTimeout(3000);
             connection.setReadTimeout(3000);

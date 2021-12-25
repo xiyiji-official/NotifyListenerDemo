@@ -11,6 +11,8 @@ import android.os.StrictMode;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,6 +29,7 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
     String msgText;
     String appName = "";
     String data = "";
+    String ip = "";
     private static final int REQUEST_CODE = 9527;
     private TextView textView;
 
@@ -38,6 +41,7 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         textView = findViewById(R.id.textView);
+
         NotifyHelper.getInstance().setNotifyListener(this);
     }
 
@@ -97,6 +101,7 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
+
     /**
      * 收到通知
      *
@@ -104,12 +109,24 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
      */
     @Override
     public void onNotificationPosted(StatusBarNotification sbn) {
+        final EditText editText = findViewById(R.id.input_ip);
+        ip = editText.getText().toString();
+        if (ip.equals("")){
+            showMsg("请输入ip地址和端口");
+        }
+        else {
+            try {
+                HttpHelper.post(ip,"0");
+            } catch (Exception e) {
+                showMsg("请输入正确的ip地址和端口");
+            }
+        }
         boolean same;
         if (sbn.getNotification() == null) return;
         try {
-            Log.i("info", msgText);
+            Log.i("msgText", msgText);
         } catch (Exception e) {
-            Log.i("info", "null");
+            Log.i("msgText", "null");
         }
         try {
             same = msgText.equals(sbn.getNotification().extras.getString(Notification.EXTRA_TEXT))&&
@@ -118,7 +135,7 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
             same = false;
         }
         if (same) {
-            Log.i("info", "相同");
+            Log.i("same", "相同");
         } else {
             msgTitle = sbn.getNotification().extras.getString(Notification.EXTRA_TITLE);
             msgText = sbn.getNotification().extras.getString(Notification.EXTRA_TEXT);
@@ -131,8 +148,8 @@ public class MainActivity extends AppCompatActivity implements NotifyListener {
             data = String.format(Locale.getDefault(),
                     "{'PackageName':'%s','AppName':'%s','Title':'%s','Text':'%s','time':'%s'}",
                     sbn.getPackageName(), appName, msgTitle, msgText, time);
-            Log.i("info", data);
-            HttpHelper.post(data);
+            Log.i("data", data);
+            HttpHelper.post(ip, data);
 
 
             textView.setText(String.format(Locale.getDefault(),
